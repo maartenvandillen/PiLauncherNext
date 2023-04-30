@@ -104,6 +104,29 @@ public class AppsAdapter extends BaseAdapter
         return position;
     }
 
+    private ViewGroup.LayoutParams getItemLayoutParams(View layout) {
+        return getItemLayoutParams(layout, false);
+    }
+
+    private ViewGroup.LayoutParams getItemLayoutParams(View layout, boolean focused) {
+        ViewGroup.LayoutParams params = layout.getLayoutParams();
+        params.width = focused ? (int) (itemScale * 1.05) : itemScale;
+        if (style == 0) {
+            if (showTextLabels) {
+                params.height = (int) (itemScale * 0.8);
+            } else {
+                params.height = (int) (itemScale * 0.6525);
+            }
+        } else {
+            if (showTextLabels) {
+                params.height = (int) (itemScale * 1.18);
+            } else {
+                params.height = itemScale;
+            }
+        }
+        return params;
+    }
+
     private final Handler handler = new Handler();
     @SuppressLint("NewApi")
     public View getView(int position, View convertView, ViewGroup parent)
@@ -124,26 +147,26 @@ public class AppsAdapter extends BaseAdapter
             convertView.setTag(holder);
 
             // Set size of items
-            ViewGroup.LayoutParams params = holder.layout.getLayoutParams();
-
-            params.width = itemScale;
-            if (style == 0) {
-                if(showTextLabels) {
-                    params.height = (int) (itemScale * 0.8);
-                }else{
-                    params.height = (int) (itemScale * 0.6525);
-                }
-            } else {
-                if(showTextLabels) {
-                    params.height = (int) (itemScale * 1.18);
-                }else{
-                    params.height = itemScale;
-                }
-            }
+            ViewGroup.LayoutParams params = getItemLayoutParams(holder.layout);
             holder.layout.setLayoutParams(params);
             int kScale = sharedPreferences.getInt(SettingsProvider.KEY_CUSTOM_SCALE, DEFAULT_SCALE) + 1;
             float textSize = holder.textView.getTextSize();
             holder.textView.setTextSize(Math.max(10, textSize / 5 * kScale));
+
+            holder.layout.setOnHoverListener((layout, motionEvent) -> {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_HOVER_ENTER:
+                        // Increase the size of the item
+                        layout.setLayoutParams(getItemLayoutParams(layout, true));
+                        break;
+                    case MotionEvent.ACTION_HOVER_EXIT:
+                        // Restore the original size of the item
+                        layout.setLayoutParams(getItemLayoutParams(layout));
+                        break;
+                }
+
+                return true;
+            });
         } else {
             // ViewHolder already exists, reuse it
             holder = (ViewHolder) convertView.getTag();
